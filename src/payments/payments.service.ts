@@ -6,7 +6,6 @@ import * as https from 'https';
 export class PaymentsService {
   private readonly API_URL = 'https://api.mercadopago.com/v1';
 
-  // GET payment by ID
   async getPaymentById(id: string, token: string) {
     const httpsAgent = new https.Agent({
       rejectUnauthorized: false, // Disable SSL validation if needed
@@ -15,9 +14,9 @@ export class PaymentsService {
     try {
       const response = await axios.get(`${this.API_URL}/payments/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`, // Use the extracted token
+          Authorization: `Bearer ${token}`,
         },
-        httpsAgent, // Optional: SSL certificate bypass
+        httpsAgent,
       });
       return response.data;
     } catch (error) {
@@ -29,10 +28,9 @@ export class PaymentsService {
     }
   }
 
-  // POST to create a new payment
   async createPayment(paymentData: any, token: string) {
     const httpsAgent = new https.Agent({
-      rejectUnauthorized: false, // Disable SSL validation if needed
+      rejectUnauthorized: false,
     });
 
     try {
@@ -41,11 +39,11 @@ export class PaymentsService {
         paymentData,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Use the token extracted from the header
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
-            'X-Idempotency-Key': paymentData['idempotency_key'], // Optional: Idempotency Key
+            'X-Idempotency-Key': paymentData.idempotency_key || '',
           },
-          httpsAgent, // Optional: SSL certificate bypass
+          httpsAgent,
         },
       );
       return response.data;
@@ -53,6 +51,61 @@ export class PaymentsService {
       console.error('Error creating payment:', error);
       throw new HttpException(
         error.response?.data || 'Error creating payment',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updatePayment(id: string, updateData: any, token: string) {
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false,
+    });
+
+    try {
+      const response = await axios.put(
+        `${this.API_URL}/payments/${id}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          httpsAgent,
+        },
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      throw new HttpException(
+        error.response?.data || 'Error updating payment',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async searchPayments(queryParams: any, token: string) {
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false,
+    });
+
+    const queryString = new URLSearchParams(queryParams).toString();
+
+    try {
+      const response = await axios.get(
+        `${this.API_URL}/payments/search?${queryString}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          httpsAgent,
+        },
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error searching payments:', error);
+      throw new HttpException(
+        error.response?.data || 'Error searching payments',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
